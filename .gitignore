@@ -1,0 +1,14 @@
+# Environments
+venv/
+.env
+
+# Python caching
+__pycache__/
+*.pyc
+
+# Database
+db.sqlite3
+
+# Project Documents
+DB-Schema.txt
+WalletWise-Django-ProjectPlanDocument.docx
