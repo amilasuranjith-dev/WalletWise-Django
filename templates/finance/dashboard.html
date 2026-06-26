@@ -1,0 +1,211 @@
+{% extends 'finance_base.html' %}
+
+{% block content %}
+<header class="flex justify-between items-center mb-8">
+    <div>
+        <h1 class="text-2xl font-bold text-slate-800">Dashboard</h1>
+        <p class="text-sm text-slate-500 mt-1">Welcome back, {{ request.user.username|title }}! Here's your financial overview.</p>
+    </div>
+    <div>
+        <button class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-slate-700 shadow-sm hover:bg-gray-50 flex items-center gap-2">
+            📅 May 12 - May 18, 2024
+        </button>
+    </div>
+</header>
+
+<!-- Top Summary Cards -->
+<div class="grid grid-cols-4 gap-6 mb-8">
+    <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-200">
+        <div class="text-sm font-medium text-slate-500 mb-2">Total Income</div>
+        <div class="text-2xl font-bold text-slate-800 mb-2">LKR {{ total_income }}</div>
+        <div class="flex items-center gap-1 text-sm">
+            <span class="text-brand-500 font-medium">↑ 12.5%</span>
+            <span class="text-slate-400">vs last month</span>
+        </div>
+    </div>
+    <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-200">
+        <div class="text-sm font-medium text-slate-500 mb-2">Total Expenses</div>
+        <div class="text-2xl font-bold text-slate-800 mb-2">LKR {{ total_expenses }}</div>
+        <div class="flex items-center gap-1 text-sm">
+            <span class="text-red-500 font-medium">↓ 8.3%</span>
+            <span class="text-slate-400">vs last month</span>
+        </div>
+    </div>
+    <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-200">
+        <div class="text-sm font-medium text-slate-500 mb-2">Current Balance</div>
+        <div class="text-2xl font-bold text-slate-800 mb-2">LKR {{ current_balance }}</div>
+        <div class="flex items-center gap-1 text-sm">
+            <span class="text-brand-500 font-medium">↑ 15.2%</span>
+            <span class="text-slate-400">vs last month</span>
+        </div>
+    </div>
+    <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-200">
+        <div class="text-sm font-medium text-slate-500 mb-2">Accounts</div>
+        <div class="text-2xl font-bold text-slate-800 mb-2">{{ accounts_count }}</div>
+        <div class="flex items-center gap-1 text-sm">
+            <span class="text-slate-400">Active accounts</span>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="grid grid-cols-3 gap-6 mb-8">
+    <div class="col-span-2 bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="font-bold text-slate-800">Income vs Expenses</h3>
+            <select class="text-sm border-gray-200 rounded-lg text-slate-600 outline-none">
+                <option>This Month</option>
+            </select>
+        </div>
+        <canvas id="mainChart" height="100"></canvas>
+    </div>
+    
+    <div class="col-span-1 bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex flex-col">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="font-bold text-slate-800">Top Spending Categories</h3>
+            <a href="#" class="text-sm font-semibold text-brand-500 hover:text-brand-900">View All</a>
+        </div>
+        <div class="flex-grow flex items-center justify-center">
+            <canvas id="pieChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Bottom Section: Transactions & Accounts -->
+<div class="grid grid-cols-3 gap-6">
+    <div class="col-span-2 bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="font-bold text-slate-800">Recent Transactions</h3>
+            <div class="flex gap-4">
+                <a href="{% url 'transaction_create' %}" class="px-4 py-2 bg-brand-900 text-white rounded-lg text-sm font-medium hover:bg-brand-500 transition-colors shadow-sm">+ Add Transaction</a>
+            </div>
+        </div>
+        <table class="w-full text-left text-sm text-slate-600">
+            <thead class="text-xs uppercase text-slate-400 border-b border-gray-100">
+                <tr>
+                    <th class="py-3 font-medium">Date</th>
+                    <th class="py-3 font-medium">Description</th>
+                    <th class="py-3 font-medium">Category</th>
+                    <th class="py-3 font-medium">Account</th>
+                    <th class="py-3 font-medium">Type</th>
+                    <th class="py-3 font-medium text-right">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for txn in recent_transactions %}
+                <tr class="border-b border-gray-50 hover:bg-gray-50/50">
+                    <td class="py-4 font-medium text-slate-800">{{ txn.transaction_date|date:"M d, Y" }}</td>
+                    <td class="py-4">{{ txn.description|default:"-" }}</td>
+                    <td class="py-4">
+                        <span class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full {% if txn.type == 'income' %}bg-brand-500{% else %}bg-red-500{% endif %}"></span> 
+                            {{ txn.category.name }}
+                        </span>
+                    </td>
+                    <td class="py-4">{{ txn.finance_account.name }}</td>
+                    <td class="py-4">
+                        {% if txn.type == 'income' %}
+                            <span class="px-3 py-1 rounded-full bg-brand-light text-brand-900 text-xs font-semibold">Income</span>
+                        {% else %}
+                            <span class="px-3 py-1 rounded-full bg-red-100 text-red-600 text-xs font-semibold">Expense</span>
+                        {% endif %}
+                    </td>
+                    <td class="py-4 text-right font-bold {% if txn.type == 'income' %}text-brand-500{% else %}text-red-500{% endif %}">
+                        {% if txn.type == 'income' %}+{% else %}-{% endif %} LKR {{ txn.amount|floatformat:2 }}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="py-8 text-center text-slate-500">No transactions yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="col-span-1 flex flex-col gap-6">
+        <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-bold text-slate-800">Accounts Overview</h3>
+                <a href="#" class="text-sm font-semibold text-brand-500 hover:text-brand-900">View All</a>
+            </div>
+            <div class="flex flex-col gap-4">
+                {% for account in accounts %}
+                <div class="flex justify-between items-center pb-4 {% if not forloop.last %}border-b border-gray-100{% endif %}">
+                    <span class="text-sm font-medium text-slate-700 flex items-center gap-2">🏦 {{ account.name }}</span>
+                    <span class="text-sm font-bold text-slate-800">LKR {{ account.balance|floatformat:2 }}</span>
+                </div>
+                {% empty %}
+                <div class="text-sm text-slate-500 text-center py-2">No accounts created yet.</div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="bg-brand-light p-6 rounded-2xl shadow-sm border border-brand-300/30">
+            <h3 class="font-bold text-brand-900 mb-2 flex items-center gap-2">💡 Financial Tip</h3>
+            <p class="text-sm text-brand-900/80 leading-relaxed">Track your expenses daily to build better spending habits and reach your goals faster.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js Initialization Script -->
+<script>
+    const months = {{ months_json|safe }};
+    const incomeData = {{ income_json|safe }};
+    const expenseData = {{ expense_json|safe }};
+
+    const ctxMain = document.getElementById('mainChart').getContext('2d');
+    new Chart(ctxMain, {
+        type: 'line',
+        data: {
+            labels: months,
+            datasets: [
+                {
+                    label: 'Income',
+                    data: incomeData,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Expenses',
+                    data: expenseData,
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.0)',
+                    tension: 0.4,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                y: { beginAtZero: true, grid: { borderDash: [5, 5] } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    const ctxPie = document.getElementById('pieChart').getContext('2d');
+    new Chart(ctxPie, {
+        type: 'doughnut',
+        data: {
+            labels: ['Food', 'Transport', 'Shopping', 'Bills', 'Others'],
+            datasets: [{
+                data: [28500, 18200, 15400, 12300, 24100],
+                backgroundColor: ['#135E4B', '#4CB572', '#A1D8B5', '#CCDCDB', '#eaf2f1'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            cutout: '75%',
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+</script>
+{% endblock %}
