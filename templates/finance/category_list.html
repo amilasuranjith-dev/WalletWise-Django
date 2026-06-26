@@ -1,0 +1,78 @@
+{% extends 'finance_base.html' %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800">Categories</h1>
+            <p class="text-sm text-slate-500 mt-1">Manage your income and expense categories.</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-3 gap-8">
+        <!-- List of Categories -->
+        <div class="col-span-2">
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                <table class="w-full text-left text-sm text-slate-600">
+                    <thead class="bg-gray-50 text-xs uppercase text-slate-400 border-b border-gray-100">
+                        <tr>
+                            <th class="py-3 px-6 font-medium">Name</th>
+                            <th class="py-3 px-6 font-medium">Type</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cat in categories %}
+                        <tr class="border-b border-gray-50 hover:bg-gray-50/50">
+                            <td class="py-4 px-6 font-medium text-slate-800 flex items-center gap-2">
+                                {{ cat.icon|default:"🏷️" }} {{ cat.name }}
+                                {% if cat.user == None %}
+                                    <span class="ml-2 px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 text-gray-500 uppercase">System</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-4 px-6">
+                                {% if cat.type == 'income' %}
+                                    <span class="px-2 py-1 rounded bg-brand-light text-brand-900 text-xs font-semibold uppercase">Income</span>
+                                {% elif cat.type == 'expense' %}
+                                    <span class="px-2 py-1 rounded bg-red-100 text-red-600 text-xs font-semibold uppercase">Expense</span>
+                                {% else %}
+                                    <span class="px-2 py-1 rounded bg-gray-100 text-gray-600 text-xs font-semibold uppercase">Both</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="2" class="py-8 text-center text-slate-500">No categories exist.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Add New Category Form -->
+        <div class="col-span-1">
+            <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                <h3 class="font-bold text-slate-800 mb-4">Add Custom Category</h3>
+                <form method="post" class="space-y-4">
+                    {% csrf_token %}
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Name</label>
+                        {{ form.name }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Type</label>
+                        {{ form.type }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Emoji Icon</label>
+                        {{ form.icon }}
+                    </div>
+                    <button type="submit" class="w-full py-2 px-4 bg-brand-900 hover:bg-brand-500 text-white font-semibold rounded-xl transition-all shadow-sm">
+                        + Create Category
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

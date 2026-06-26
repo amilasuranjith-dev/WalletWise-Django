@@ -1,0 +1,73 @@
+{% extends 'finance_base.html' %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800">Add Transaction</h1>
+            <p class="text-sm text-slate-500 mt-1">Record a new income or expense.</p>
+        </div>
+        <a href="{% url 'dashboard' %}" class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
+            Cancel
+        </a>
+    </div>
+
+    <div class="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="mb-6 p-4 rounded-xl text-sm font-medium {% if message.tags == 'error' %}bg-red-50 text-red-600 border border-red-200{% else %}bg-green-50 text-brand-900 border border-brand-300{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Account</label>
+                    {{ form.finance_account }}
+                    <span class="text-xs text-red-500 mt-1">{{ form.finance_account.errors }}</span>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Type</label>
+                    {{ form.type }}
+                    <span class="text-xs text-red-500 mt-1">{{ form.type.errors }}</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Category</label>
+                    {{ form.category }}
+                    <span class="text-xs text-red-500 mt-1">{{ form.category.errors }}</span>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Amount (LKR)</label>
+                    {{ form.amount }}
+                    <span class="text-xs text-red-500 mt-1">{{ form.amount.errors }}</span>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Date</label>
+                {{ form.transaction_date }}
+                <span class="text-xs text-red-500 mt-1">{{ form.transaction_date.errors }}</span>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Description</label>
+                {{ form.description }}
+                <span class="text-xs text-red-500 mt-1">{{ form.description.errors }}</span>
+            </div>
+
+            <div class="pt-4 border-t border-gray-100">
+                <button type="submit" class="w-full py-3 px-4 bg-brand-900 hover:bg-brand-500 text-white font-semibold rounded-xl transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg shadow-sm">
+                    Save Transaction
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
