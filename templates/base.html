@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}WalletWise{% endblock %}</title>
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS (CDN for quick setup) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            900: '#135E4B', /* Deep Green */
+                            500: '#4CB572', /* Vibrant Green */
+                            300: '#A1D8B5', /* Light Green */
+                            100: '#CCDCDB', /* Pale Gray-Green */
+                        }
+                    },
+                    animation: {
+                        'blob': 'blob 7s infinite',
+                        'fade-in-up': 'fadeInUp 0.5s ease-out forwards',
+                    },
+                    keyframes: {
+                        blob: {
+                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
+                        },
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass {
+                @apply bg-white/70 backdrop-blur-lg border border-white/40 shadow-xl;
+            }
+            .glass-input {
+                @apply w-full px-4 py-3 bg-white/50 border border-brand-100/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all duration-300;
+            }
+            .btn-primary {
+                @apply w-full py-3 px-4 bg-brand-900 hover:bg-brand-500 text-white font-semibold rounded-xl transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg hover:shadow-brand-500/30;
+            }
+            .help-text-content ul {
+                @apply list-disc pl-4 space-y-1 mt-1;
+            }
+            .help-text-content li {
+                @apply text-brand-900/80;
+            }
+        }
+    </style>
+</head>
+<body class="bg-brand-100 min-h-screen text-gray-800 font-sans relative overflow-x-hidden flex flex-col">
+    <!-- Animated Background Blobs -->
+    <div class="absolute top-0 -left-4 w-72 h-72 bg-brand-300 rounded-full mix-blend-multiply filter blur-2xl opacity-70 animate-blob z-0"></div>
+    <div class="absolute top-0 -right-4 w-72 h-72 bg-brand-500 rounded-full mix-blend-multiply filter blur-2xl opacity-70 animate-blob animation-delay-2000 z-0"></div>
+    <div class="absolute -bottom-8 left-20 w-72 h-72 bg-brand-900 rounded-full mix-blend-multiply filter blur-2xl opacity-30 animate-blob animation-delay-4000 z-0"></div>
+
+    <!-- Navigation -->
+    <nav class="relative z-10 glass px-6 py-4 mx-4 mt-4 rounded-2xl flex justify-between items-center">
+        <a href="{% url 'home' %}" class="text-2xl font-bold text-brand-900 tracking-tight">
+            Wallet<span class="text-brand-500">Wise</span>
+        </a>
+        <div>
+            {% if user.is_authenticated %}
+                <span class="mr-4 font-medium text-gray-600">Hi, {{ user.username }}</span>
+                <form action="{% url 'logout' %}" method="post" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="text-brand-900 hover:text-brand-500 font-semibold transition-colors">Logout</button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}" class="mr-4 text-brand-900 font-medium hover:text-brand-500 transition-colors">Log In</a>
+                <a href="{% url 'register' %}" class="px-5 py-2 bg-brand-900 text-white rounded-lg hover:bg-brand-500 transition-colors font-medium">Sign Up</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="relative z-10 flex-grow flex items-center justify-center p-4">
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

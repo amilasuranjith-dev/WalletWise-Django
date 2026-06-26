@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}Log In - WalletWise{% endblock %}
+
+{% block content %}
+<div class="w-full max-w-md animate-fade-in-up">
+    <div class="glass p-10 rounded-3xl relative overflow-hidden">
+        <!-- Decorative corner -->
+        <div class="absolute -top-10 -right-10 w-24 h-24 bg-brand-500 rounded-full opacity-20 blur-xl"></div>
+        
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-brand-900 mb-2">Welcome Back</h1>
+            <p class="text-gray-500">Sign in to manage your finances seamlessly.</p>
+        </div>
+
+        {% if form.errors %}
+            <div class="mb-4 p-4 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm">
+                Your username and password didn't match. Please try again.
+            </div>
+        {% endif %}
+
+        <form method="post" class="space-y-5">
+            {% csrf_token %}
+            
+            {% for field in form %}
+            <div>
+                <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-brand-900 mb-1 ml-1">
+                    {{ field.label }}
+                </label>
+                {{ field.errors }}
+                <input type="{{ field.field.widget.input_type }}" 
+                       name="{{ field.name }}" 
+                       id="{{ field.id_for_label }}"
+                       class="glass-input" 
+                       placeholder="Enter your {{ field.label|lower }}"
+                       {% if field.field.required %}required{% endif %}>
+            </div>
+            {% endfor %}
+
+            <div class="flex items-center justify-between text-sm mt-2">
+                <label class="flex items-center text-gray-600 cursor-pointer">
+                    <input type="checkbox" class="mr-2 rounded text-brand-500 focus:ring-brand-500 bg-white/50 border-brand-100">
+                    Remember me
+                </label>
+                <a href="#" class="text-brand-500 hover:text-brand-900 font-medium transition-colors">Forgot password?</a>
+            </div>
+
+            <button type="submit" class="btn-primary mt-6">
+                Sign In
+            </button>
+        </form>
+
+        <div class="mt-8 text-center">
+            <p class="text-gray-500 text-sm">
+                Don't have an account yet? 
+                <a href="{% url 'register' %}" class="text-brand-900 hover:text-brand-500 font-semibold transition-colors">Create one now</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

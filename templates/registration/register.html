@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign Up - WalletWise{% endblock %}
+
+{% block content %}
+<div class="w-full max-w-md animate-fade-in-up">
+    <div class="glass px-8 py-6 rounded-3xl relative overflow-hidden">
+        <!-- Decorative corner -->
+        <div class="absolute -bottom-10 -left-10 w-24 h-24 bg-brand-300 rounded-full opacity-30 blur-xl"></div>
+        
+        <div class="text-center mb-5">
+            <h1 class="text-3xl font-bold text-brand-900 mb-1">Create Account</h1>
+            <p class="text-gray-500 text-sm">Join WalletWise to track your spending today.</p>
+        </div>
+
+        <form method="post" class="space-y-3 relative z-10">
+            {% csrf_token %}
+            
+            {% for field in form %}
+            <div>
+                <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-brand-900 mb-1 ml-1">
+                    {{ field.label }}
+                </label>
+                
+                {% if field.errors %}
+                    <div class="text-xs text-red-500 mb-1 ml-1">{{ field.errors|striptags }}</div>
+                {% endif %}
+                
+                <input type="{{ field.field.widget.input_type }}" 
+                       name="{{ field.name }}" 
+                       id="{{ field.id_for_label }}"
+                       class="glass-input py-2 {% if field.errors %}border-red-400 focus:ring-red-500{% endif %}" 
+                       placeholder="Enter your {{ field.label|lower }}"
+                       {% if field.field.required %}required{% endif %}>
+                       
+            </div>
+            {% endfor %}
+
+            <button type="submit" class="btn-primary mt-4 py-2.5">
+                Create Account
+            </button>
+        </form>
+
+        <div class="mt-5 text-center relative z-10">
+            <p class="text-gray-500 text-sm">
+                Already have an account? 
+                <a href="{% url 'login' %}" class="text-brand-900 hover:text-brand-500 font-semibold transition-colors">Log in here</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
