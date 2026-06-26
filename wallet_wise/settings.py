@@ -35,6 +35,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'unfold',  
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -130,3 +131,21 @@ AUTH_USER_MODEL = 'accounts.CustomUser'
 LOGIN_REDIRECT_URL = '/'
 
 LOGOUT_REDIRECT_URL = '/accounts/login/'
+UNFOLD = {
+    "SITE_TITLE": "WalletWise Admin",
+    "SITE_HEADER": "WalletWise",
+    "COLORS": {
+        "primary": {
+            "50": "#eaf2f1",
+            "100": "#CCDCDB",
+            "200": "#A1D8B5",
+            "300": "#7ac493",
+            "400": "#4CB572",
+            "500": "#135E4B",
+            "600": "#0e4b3c",
+            "700": "#0a382d",
+            "800": "#06251e",
+            "900": "#02130f",
+        },
+    },
+}
