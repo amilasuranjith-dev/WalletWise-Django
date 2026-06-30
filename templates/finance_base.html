@@ -47,7 +47,7 @@
             <a href="{% url 'account_list_create' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 font-medium hover:bg-gray-50 hover:text-brand-900 transition-colors">
                 Accounts
             </a>
-            <a href="{% url 'transaction_create' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 font-medium hover:bg-gray-50 hover:text-brand-900 transition-colors">
+            <a href="{% url 'transaction_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 font-medium hover:bg-gray-50 hover:text-brand-900 transition-colors">
                 Transactions
             </a>
             <a href="{% url 'category_list_create' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 font-medium hover:bg-gray-50 hover:text-brand-900 transition-colors">
@@ -86,5 +86,44 @@
         {% block content %}{% endblock %}
     </main>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            function filterCategories(typeSelect, categorySelect) {
+                const selectedType = typeSelect.value.toLowerCase();
+                
+                Array.from(categorySelect.options).forEach(option => {
+                    if (!option.value) return; 
+                    const optionText = option.text.toLowerCase();
+                    
+                    if (optionText.includes(`(${selectedType})`) || optionText.includes('(both)')) {
+                        option.style.display = '';
+                    } else {
+                        option.style.display = 'none';
+                    }
+                });
+
+                const currentOption = categorySelect.options[categorySelect.selectedIndex];
+                if (currentOption && currentOption.style.display === 'none') {
+                    const firstVisible = Array.from(categorySelect.options).find(opt => opt.value && opt.style.display !== 'none');
+                    categorySelect.value = firstVisible ? firstVisible.value : '';
+                }
+            }
+
+            const setupFormFilters = () => {
+                const forms = document.querySelectorAll('form');
+                forms.forEach(form => {
+                    const typeSelect = form.querySelector('select[name="type"]');
+                    const categorySelect = form.querySelector('select[name="category"]');
+                    
+                    if (typeSelect && categorySelect) {
+                        filterCategories(typeSelect, categorySelect);
+                        typeSelect.addEventListener('change', () => filterCategories(typeSelect, categorySelect));
+                    }
+                });
+            };
+            
+            setupFormFilters();
+        });
+    </script>
 </body>
 </html>
