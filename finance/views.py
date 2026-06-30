@@ -98,3 +98,50 @@ def transaction_create_view(request):
         form = TransactionForm(user=request.user)
         
     return render(request, 'finance/transaction_form.html', {'form': form})
+
+@login_required
+def transaction_list_view(request):
+    user_transactions = TransactionService.get_user_transactions(request.user)
+    
+    transactions_with_forms = []
+    for transaction in user_transactions:
+        edit_form = TransactionForm(instance=transaction, user=request.user)
+        transactions_with_forms.append({'transaction': transaction, 'form': edit_form})
+        
+    context = {
+        'transactions_with_forms': transactions_with_forms
+    }
+    return render(request, 'finance/transaction_list.html', context)
+
+@login_required
+def transaction_update_view(request, transaction_id):
+    if request.method == 'POST':
+        existing_transaction = TransactionService.get_transaction(transaction_id, request.user)
+        form = TransactionForm(request.POST, instance=existing_transaction, user=request.user)
+        if form.is_valid():
+            try:
+                TransactionService.update_transaction(
+                    transaction_id, request.user,
+                    amount=form.cleaned_data['amount'],
+                    description=form.cleaned_data['description'],
+                    type=form.cleaned_data['type'],
+                    finance_account=form.cleaned_data['finance_account'],
+                    category=form.cleaned_data['category'],
+                    transaction_date=form.cleaned_data['transaction_date']
+                )
+                messages.success(request, 'Transaction updated successfully!')
+            except ValidationError as error:
+                messages.error(request, str(error.message) if hasattr(error, 'message') else str(error))
+        else:
+            messages.error(request, "Invalid data submitted.")
+    return redirect('transaction_list')
+
+@login_required
+def transaction_delete_view(request, transaction_id):
+    if request.method == 'POST':
+        try:
+            TransactionService.delete_transaction(transaction_id, request.user)
+            messages.success(request, 'Transaction deleted successfully!')
+        except ValidationError as error:
+            messages.error(request, str(error.message) if hasattr(error, 'message') else str(error))
+    return redirect('transaction_list')

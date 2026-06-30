@@ -1,0 +1,105 @@
+{% extends 'finance_base.html' %}
+
+{% block content %}
+<header class="flex justify-between items-center mb-8">
+    <div>
+        <h1 class="text-2xl font-bold text-slate-800">Transactions</h1>
+        <p class="text-sm text-slate-500 mt-1">View and manage all your income and expenses.</p>
+    </div>
+    <div>
+        <a href="{% url 'transaction_create' %}" class="px-4 py-2 bg-brand-900 text-white rounded-lg text-sm font-medium hover:bg-brand-500 transition-colors shadow-sm">+ Add Transaction</a>
+    </div>
+</header>
+
+<div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+    <table class="w-full text-left text-sm text-slate-600">
+        <thead class="text-xs uppercase text-slate-400 border-b border-gray-100">
+            <tr>
+                <th class="py-3 font-medium">Date</th>
+                <th class="py-3 font-medium">Description</th>
+                <th class="py-3 font-medium">Category</th>
+                <th class="py-3 font-medium">Account</th>
+                <th class="py-3 font-medium">Type</th>
+                <th class="py-3 font-medium text-right">Amount</th>
+                <th class="py-3 font-medium text-center">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for transaction_item in transactions_with_forms %}
+            <tr class="border-b border-gray-50 hover:bg-gray-50/50">
+                <td class="py-4 font-medium text-slate-800">{{ transaction_item.transaction.transaction_date|date:"M d, Y" }}</td>
+                <td class="py-4">{{ transaction_item.transaction.description|default:"-" }}</td>
+                <td class="py-4">
+                    <span class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full {% if transaction_item.transaction.type == 'income' %}bg-brand-500{% else %}bg-red-500{% endif %}"></span> 
+                        {{ transaction_item.transaction.category.name }}
+                    </span>
+                </td>
+                <td class="py-4">{{ transaction_item.transaction.finance_account.name }}</td>
+                <td class="py-4">
+                    {% if transaction_item.transaction.type == 'income' %}
+                        <span class="px-3 py-1 rounded-full bg-brand-light text-brand-900 text-xs font-semibold">Income</span>
+                    {% else %}
+                        <span class="px-3 py-1 rounded-full bg-red-100 text-red-600 text-xs font-semibold">Expense</span>
+                    {% endif %}
+                </td>
+                <td class="py-4 text-right font-bold {% if transaction_item.transaction.type == 'income' %}text-brand-500{% else %}text-red-500{% endif %}">
+                    {% if transaction_item.transaction.type == 'income' %}+{% else %}-{% endif %} LKR {{ transaction_item.transaction.amount|floatformat:2 }}
+                </td>
+                <td class="py-4 text-center">
+                    <!-- Edit Button -->
+                    <button onclick="document.getElementById('editModal-{{ transaction_item.transaction.id }}').classList.remove('hidden')" class="text-brand-600 hover:text-brand-800 font-medium text-sm mr-2">Edit</button>
+                    <!-- Delete Button -->
+                    <button onclick="document.getElementById('deleteModal-{{ transaction_item.transaction.id }}').classList.remove('hidden')" class="text-red-500 hover:text-red-700 font-medium text-sm">Delete</button>
+                </td>
+            </tr>
+
+            <!-- Edit Modal -->
+            <div id="editModal-{{ transaction_item.transaction.id }}" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden flex items-center justify-center z-50">
+                <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold text-slate-800">Edit Transaction</h3>
+                        <button onclick="document.getElementById('editModal-{{ transaction_item.transaction.id }}').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+                    </div>
+                    <form method="POST" action="{% url 'transaction_update' transaction_item.transaction.id %}">
+                        {% csrf_token %}
+                        {% for form_field in transaction_item.form %}
+                        <div class="mb-4 text-left">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">{{ form_field.label }}</label>
+                            {{ form_field }}
+                        </div>
+                        {% endfor %}
+                        
+                        <div class="mt-6 flex justify-end gap-3">
+                            <button type="button" onclick="document.getElementById('editModal-{{ transaction_item.transaction.id }}').classList.add('hidden')" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200">Cancel</button>
+                            <button type="submit" class="px-4 py-2 bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Delete Modal -->
+            <div id="deleteModal-{{ transaction_item.transaction.id }}" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden flex items-center justify-center z-50">
+                <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 text-center">
+                    <div class="text-red-500 text-4xl mb-4">⚠️</div>
+                    <h3 class="text-xl font-bold text-slate-800 mb-2">Delete Transaction?</h3>
+                    <p class="text-slate-500 mb-6">Are you sure you want to delete this transaction? This action cannot be undone and your account balance will be updated.</p>
+                    <div class="flex justify-center gap-3">
+                        <button onclick="document.getElementById('deleteModal-{{ transaction_item.transaction.id }}').classList.add('hidden')" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 w-1/2">Cancel</button>
+                        <form method="POST" action="{% url 'transaction_delete' transaction_item.transaction.id %}" class="w-1/2">
+                            {% csrf_token %}
+                            <button type="submit" class="w-full px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700">Yes, Delete</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            {% empty %}
+            <tr>
+                <td colspan="7" class="py-8 text-center text-slate-500">No transactions yet.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
