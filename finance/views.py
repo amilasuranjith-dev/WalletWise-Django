@@ -42,6 +42,15 @@ def dashboard_view(request):
 @login_required
 def category_list_create_view(request):
     categories = CategoryService.get_available_categories(request.user)
+    
+    categories_with_forms = []
+    for category in categories:
+        if category.user == request.user:
+            edit_form = CategoryForm(instance=category)
+            categories_with_forms.append({'category': category, 'form': edit_form, 'is_custom': True})
+        else:
+            categories_with_forms.append({'category': category, 'form': None, 'is_custom': False})
+
     if request.method == 'POST':
         form = CategoryForm(request.POST)
         if form.is_valid():
@@ -51,11 +60,46 @@ def category_list_create_view(request):
                 type=form.cleaned_data['type'],
                 icon=form.cleaned_data['icon']
             )
+            messages.success(request, 'Category created successfully!')
             return redirect('category_list_create')
     else:
         form = CategoryForm()
-    return render(request, 'finance/category_list.html', {'categories': categories, 'form': form})
+        
+    return render(request, 'finance/category_list.html', {
+        'categories_with_forms': categories_with_forms, 
+        'form': form
+    })
 
+@login_required
+def category_update_view(request, category_id):
+    if request.method == 'POST':
+        existing_category = CategoryService.get_category(category_id, request.user)
+        form = CategoryForm(request.POST, instance=existing_category)
+        if form.is_valid():
+            try:
+                CategoryService.update_category(
+                    category_id, request.user,
+                    name=form.cleaned_data['name'],
+                    type=form.cleaned_data['type'],
+                    icon=form.cleaned_data['icon']
+                )
+                messages.success(request, 'Category updated successfully!')
+            except ValidationError as error:
+                messages.error(request, str(error.message) if hasattr(error, 'message') else str(error))
+        else:
+            messages.error(request, "Invalid data submitted.")
+    return redirect('category_list_create')
+
+@login_required
+def category_delete_view(request, category_id):
+    if request.method == 'POST':
+        try:
+            CategoryService.delete_category(category_id, request.user)
+            messages.success(request, 'Category deleted successfully!')
+        except ValidationError as error:
+            messages.error(request, str(error.message) if hasattr(error, 'message') else str(error))
+    return redirect('category_list_create')
+    
 @login_required
 def account_list_create_view(request):
     accounts = FinanceAccountService.get_user_accounts(request.user)
