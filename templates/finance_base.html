@@ -123,6 +123,17 @@
             };
             
             setupFormFilters();
+
+            // Auto-dismiss notification messages after 3 seconds
+            setTimeout(() => {
+                const alerts = document.querySelectorAll('.bg-green-50, .bg-red-50');
+                alerts.forEach(alert => {
+                    alert.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                    alert.style.opacity = '0';
+                    alert.style.transform = 'translateY(-10px)';
+                    setTimeout(() => alert.remove(), 500);
+                });
+            }, 3000);
         });
     </script>
 </body>
