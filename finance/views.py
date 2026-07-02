@@ -2,7 +2,8 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum
 from .forms import CategoryForm, FinanceAccountForm
-from .services import CategoryService, FinanceAccountService, TransactionService
+from .services import CategoryService, FinanceAccountService, TransactionService, AnalyticsService
+import json
 
 @login_required
 def dashboard_view(request):
@@ -21,11 +22,48 @@ def dashboard_view(request):
     total_income = transactions.filter(type='income').aggregate(total=Sum('amount'))['total'] or 0.00
     total_expenses = transactions.filter(type='expense').aggregate(total=Sum('amount'))['total'] or 0.00
     
-    # DUMMY DATA FOR CHARTS AS REQUESTED
-    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
-    income_data = [120000, 150000, 140000, 180000, 160000, 245000]
-    expense_data = [50000, 60000, 55000, 70000, 65000, 98500]
+    # Dynamic Data for Charts
+    monthly_data = AnalyticsService.get_monthly_income_expense(user)
     
+    import datetime
+    from django.utils import timezone
+    
+    # Pre-fill month_dict with the last 6 months to ensure a continuous time series
+    today = timezone.now().date()
+    month_dict = {}
+    for i in range(5, -1, -1):
+        m = today.month - i
+        y = today.year
+        while m <= 0:
+            m += 12
+            y -= 1
+        dt = datetime.date(y, m, 1)
+        month_dict[dt.strftime('%b')] = {'income': 0.0, 'expense': 0.0}
+        
+    # Process monthly data for Chart.js
+    for item in monthly_data:
+        if item['month']:
+            month_label = item['month'].strftime('%b')
+            if month_label in month_dict:
+                month_dict[month_label][item['type']] += float(item['total'])
+                
+    months = list(month_dict.keys())
+    income_data = [month_dict[m]['income'] for m in months]
+    expense_data = [month_dict[m]['expense'] for m in months]
+    
+    # Pie chart data
+    top_categories_qs = AnalyticsService.get_top_spending_categories(user)
+    pie_labels = [c['category__name'] for c in top_categories_qs]
+    pie_data = [float(c['total']) for c in top_categories_qs]
+
+    if not months:
+        months = ['No Data']
+        income_data = [0]
+        expense_data = [0]
+    if not pie_labels:
+        pie_labels = ['No Data']
+        pie_data = [1]
+        
     context = {
         'total_income': f"{total_income:,.2f}",
         'total_expenses': f"{total_expenses:,.2f}",
@@ -36,6 +74,8 @@ def dashboard_view(request):
         'months_json': months,
         'income_json': income_data,
         'expense_json': expense_data,
+        'pie_labels_json': pie_labels,
+        'pie_data_json': pie_data,
     }
     return render(request, 'finance/dashboard.html', context)
 
@@ -183,9 +223,66 @@ def transaction_update_view(request, transaction_id):
 @login_required
 def transaction_delete_view(request, transaction_id):
     if request.method == 'POST':
-        try:
-            TransactionService.delete_transaction(transaction_id, request.user)
-            messages.success(request, 'Transaction deleted successfully!')
-        except ValidationError as error:
-            messages.error(request, str(error.message) if hasattr(error, 'message') else str(error))
-    return redirect('transaction_list')
+        TransactionService.delete_transaction(transaction_id, request.user)
+        messages.success(request, 'Transaction deleted successfully!')
+        return redirect('transaction_list')
+        
+    transaction = TransactionService.get_transaction(transaction_id, request.user)
+    return render(request, 'finance/transaction_confirm_delete.html', {'transaction': transaction})
+
+@login_required
+def reports_view(request):
+    user = request.user
+    
+    # We can reuse the same analytics service for the reports page
+    monthly_data = AnalyticsService.get_monthly_income_expense(user)
+    
+    import datetime
+    from django.utils import timezone
+    
+    # Pre-fill month_dict with the last 6 months to ensure a continuous time series
+    today = timezone.now().date()
+    month_dict = {}
+    for i in range(5, -1, -1):
+        m = today.month - i
+        y = today.year
+        while m <= 0:
+            m += 12
+            y -= 1
+        dt = datetime.date(y, m, 1)
+        month_dict[dt.strftime('%b %Y')] = {'income': 0.0, 'expense': 0.0, 'net': 0.0}
+        
+    for item in monthly_data:
+        if item['month']:
+            month_label = item['month'].strftime('%b %Y')
+            if month_label in month_dict:
+                month_dict[month_label][item['type']] += float(item['total'])
+
+    for label in month_dict:
+        month_dict[label]['net'] = month_dict[label]['income'] - month_dict[label]['expense']
+        
+    months = list(month_dict.keys())
+    income_data = [month_dict[m]['income'] for m in months]
+    expense_data = [month_dict[m]['expense'] for m in months]
+    
+    top_categories_qs = AnalyticsService.get_top_spending_categories(user, limit=10)
+    pie_labels = [c['category__name'] for c in top_categories_qs]
+    pie_data = [float(c['total']) for c in top_categories_qs]
+
+    if not months:
+        months = ['No Data']
+        income_data = [0]
+        expense_data = [0]
+    if not pie_labels:
+        pie_labels = ['No Data']
+        pie_data = [1]
+        
+    context = {
+        'month_dict': month_dict,
+        'months_json': months,
+        'income_json': income_data,
+        'expense_json': expense_data,
+        'pie_labels_json': pie_labels,
+        'pie_data_json': pie_data,
+    }
+    return render(request, 'finance/reports.html', context)

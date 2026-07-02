@@ -192,3 +192,44 @@ class TransactionService:
         account.save()
         txn.delete()
         return True
+
+class AnalyticsService:
+    @staticmethod
+    def get_monthly_income_expense(user, months_count=6):
+        from django.utils import timezone
+        import datetime
+        from django.db.models.functions import TruncMonth
+        from django.db.models import Sum
+
+        today = timezone.now().date()
+        
+        # Exact start date calculation: 1st day of the target month
+        month = today.month - (months_count - 1)
+        year = today.year
+        while month <= 0:
+            month += 12
+            year -= 1
+        start_date = datetime.date(year, month, 1)
+        
+        # Group by month and type, sum amount
+        data = Transaction.objects.filter(
+            finance_account__user=user,
+            transaction_date__gte=start_date
+        ).annotate(
+            month=TruncMonth('transaction_date')
+        ).values('month', 'type').annotate(
+            total=Sum('amount')
+        ).order_by('month')
+        
+        return data
+
+    @staticmethod
+    def get_top_spending_categories(user, limit=5):
+        from django.db.models import Sum
+        data = Transaction.objects.filter(
+            finance_account__user=user,
+            type='expense'
+        ).values('category__name').annotate(
+            total=Sum('amount')
+        ).order_by('-total')[:limit]
+        return data
