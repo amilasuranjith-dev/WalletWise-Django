@@ -148,32 +148,37 @@ class TransactionService:
         apply the new data, and then apply the NEW math to the wallet balance!
         """
         txn = TransactionService.get_transaction(transaction_id, user)
-        account = txn.finance_account
+        old_account = txn.finance_account
         
         # 1. Reverse the old transaction from the balance
         if txn.type == 'income':
-            account.balance -= txn.amount
+            old_account.balance -= txn.amount
         elif txn.type == 'expense':
-            account.balance += txn.amount
+            old_account.balance += txn.amount
 
         # 2. Update the transaction fields with whatever was passed in kwargs
         for field, value in kwargs.items():
             if hasattr(txn, field) and value is not None:
                 setattr(txn, field, value)
 
+        new_account = txn.finance_account
+
         # Re-validate the new state
         if txn.amount <= 0:
             raise ValidationError("Transaction amount must be greater than zero.")
-        if txn.type == 'expense' and account.balance < txn.amount:
+        if txn.type == 'expense' and new_account.balance < txn.amount:
             raise ValidationError("Insufficient funds to update to this amount.")
 
         # 3. Apply the new math back to the wallet
         if txn.type == 'income':
-            account.balance += txn.amount
+            new_account.balance += txn.amount
         elif txn.type == 'expense':
-            account.balance -= txn.amount
+            new_account.balance -= txn.amount
             
-        account.save()
+        old_account.save()
+        if old_account.id != new_account.id:
+            new_account.save()
+            
         txn.save()
         return txn
 
