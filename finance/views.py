@@ -94,14 +94,17 @@ def category_list_create_view(request):
     if request.method == 'POST':
         form = CategoryForm(request.POST)
         if form.is_valid():
-            CategoryService.create_category(
-                user=request.user,
-                name=form.cleaned_data['name'],
-                type=form.cleaned_data['type'],
-                icon=form.cleaned_data['icon']
-            )
-            messages.success(request, 'Category created successfully!')
-            return redirect('category_list_create')
+            try:
+                CategoryService.create_category(
+                    user=request.user,
+                    name=form.cleaned_data['name'],
+                    type=form.cleaned_data['type'],
+                    icon=form.cleaned_data['icon']
+                )
+                messages.success(request, 'Category created successfully!')
+                return redirect('category_list_create')
+            except ValidationError as e:
+                messages.error(request, str(e.message) if hasattr(e, 'message') else str(e))
     else:
         form = CategoryForm()
         
@@ -146,12 +149,16 @@ def account_list_create_view(request):
     if request.method == 'POST':
         form = FinanceAccountForm(request.POST)
         if form.is_valid():
-            FinanceAccountService.create_account(
-                user=request.user,
-                name=form.cleaned_data['name'],
-                initial_balance=form.cleaned_data['balance']
-            )
-            return redirect('account_list_create')
+            try:
+                FinanceAccountService.create_account(
+                    user=request.user,
+                    name=form.cleaned_data['name'],
+                    initial_balance=form.cleaned_data['balance']
+                )
+                messages.success(request, 'Account created successfully!')
+                return redirect('account_list_create')
+            except ValidationError as e:
+                messages.error(request, str(e.message) if hasattr(e, 'message') else str(e))
     else:
         form = FinanceAccountForm()
     return render(request, 'finance/account_list.html', {'accounts': accounts, 'form': form})
