@@ -1,0 +1,124 @@
+{% extends 'finance_base.html' %}
+
+{% block content %}
+<header class="flex justify-between items-center mb-8">
+    <div>
+        <h1 class="text-2xl font-bold text-slate-800">Reports & Analytics</h1>
+        <p class="text-sm text-slate-500 mt-1">Deep dive into your financial data.</p>
+    </div>
+</header>
+
+<!-- Charts Section -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <!-- Line Chart: Income vs Expense Trend -->
+    <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+        <h3 class="font-bold text-slate-800 mb-6">Income vs Expenses (Last 6 Months)</h3>
+        <canvas id="reportsMainChart" height="200"></canvas>
+    </div>
+    
+    <!-- Doughnut Chart: Top Categories -->
+    <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex flex-col items-center">
+        <h3 class="font-bold text-slate-800 mb-6 w-full text-left">Top Spending Categories</h3>
+        <div class="w-full max-w-sm flex-grow flex items-center justify-center">
+            <canvas id="reportsPieChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Data Table Section -->
+<div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm mb-8">
+    <h3 class="font-bold text-slate-800 mb-6">Monthly Breakdown</h3>
+    <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-slate-600">
+            <thead class="text-xs uppercase text-slate-400 border-b border-gray-100">
+                <tr>
+                    <th class="py-3 font-medium">Month</th>
+                    <th class="py-3 font-medium text-right text-brand-500">Income</th>
+                    <th class="py-3 font-medium text-right text-red-500">Expenses</th>
+                    <th class="py-3 font-medium text-right text-slate-800">Net Flow</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for month, data in month_dict.items %}
+                <tr class="border-b border-gray-50 hover:bg-gray-50/50">
+                    <td class="py-4 font-bold text-slate-800">{{ month }}</td>
+                    <td class="py-4 text-right font-medium text-brand-500">LKR {{ data.income|floatformat:2 }}</td>
+                    <td class="py-4 text-right font-medium text-red-500">LKR {{ data.expense|floatformat:2 }}</td>
+                    <td class="py-4 text-right font-bold {% if data.net >= 0 %}text-brand-500{% else %}text-red-500{% endif %}">
+                        LKR {{ data.net|floatformat:2 }}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="py-8 text-center text-slate-500">No data available for the selected period.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{{ months_json|json_script:"monthsData" }}
+{{ income_json|json_script:"incomeData" }}
+{{ expense_json|json_script:"expenseData" }}
+{{ pie_labels_json|json_script:"pieLabels" }}
+{{ pie_data_json|json_script:"pieData" }}
+
+<script>
+    const months = JSON.parse(document.getElementById('monthsData').textContent);
+    const incomeData = JSON.parse(document.getElementById('incomeData').textContent);
+    const expenseData = JSON.parse(document.getElementById('expenseData').textContent);
+    const pieLabels = JSON.parse(document.getElementById('pieLabels').textContent);
+    const pieData = JSON.parse(document.getElementById('pieData').textContent);
+
+    const ctxMain = document.getElementById('reportsMainChart').getContext('2d');
+    new Chart(ctxMain, {
+        type: 'bar',
+        data: {
+            labels: months,
+            datasets: [
+                {
+                    label: 'Income',
+                    data: incomeData,
+                    backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                    borderRadius: 4
+                },
+                {
+                    label: 'Expenses',
+                    data: expenseData,
+                    backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                    borderRadius: 4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                y: { beginAtZero: true, grid: { borderDash: [5, 5] } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    const ctxPie = document.getElementById('reportsPieChart').getContext('2d');
+    new Chart(ctxPie, {
+        type: 'doughnut',
+        data: {
+            labels: pieLabels,
+            datasets: [{
+                data: pieData,
+                backgroundColor: ['#135E4B', '#4CB572', '#A1D8B5', '#CCDCDB', '#eaf2f1', '#fbbf24', '#f87171', '#60a5fa', '#34d399', '#a78bfa'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            cutout: '70%',
+            plugins: {
+                legend: { position: 'right' }
+            }
+        }
+    });
+</script>
+{% endblock %}

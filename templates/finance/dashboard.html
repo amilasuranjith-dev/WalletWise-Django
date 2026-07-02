@@ -148,11 +148,16 @@
     </div>
 </div>
 
-<!-- Chart.js Initialization Script -->
+{{ months_json|json_script:"monthsData" }}
+{{ income_json|json_script:"incomeData" }}
+{{ expense_json|json_script:"expenseData" }}
+{{ pie_labels_json|json_script:"pieLabels" }}
+{{ pie_data_json|json_script:"pieData" }}
+
 <script>
-    const months = {{ months_json|safe }};
-    const incomeData = {{ income_json|safe }};
-    const expenseData = {{ expense_json|safe }};
+    const months = JSON.parse(document.getElementById('monthsData').textContent);
+    const incomeData = JSON.parse(document.getElementById('incomeData').textContent);
+    const expenseData = JSON.parse(document.getElementById('expenseData').textContent);
 
     const ctxMain = document.getElementById('mainChart').getContext('2d');
     new Chart(ctxMain, {
@@ -188,14 +193,16 @@
         }
     });
 
+    const pieLabels = JSON.parse(document.getElementById('pieLabels').textContent);
+    const pieData = JSON.parse(document.getElementById('pieData').textContent);
     const ctxPie = document.getElementById('pieChart').getContext('2d');
     new Chart(ctxPie, {
         type: 'doughnut',
         data: {
-            labels: ['Food', 'Transport', 'Shopping', 'Bills', 'Others'],
+            labels: pieLabels,
             datasets: [{
-                data: [28500, 18200, 15400, 12300, 24100],
-                backgroundColor: ['#135E4B', '#4CB572', '#A1D8B5', '#CCDCDB', '#eaf2f1'],
+                data: pieData,
+                backgroundColor: ['#135E4B', '#4CB572', '#A1D8B5', '#CCDCDB', '#eaf2f1', '#fbbf24', '#f87171', '#60a5fa', '#34d399', '#a78bfa'],
                 borderWidth: 0
             }]
         },
